@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QApplication
 
 from config import Config
 from services import APIService
-from repositories import CurrencyRepository, ExchangeRateRepository
+from repositories import CurrencyRepository, ExchangeRateRepository, HistoryRepository, SettingsRepository
 from controllers import CurrencyController
 from views import MainWindow
 
@@ -24,9 +24,11 @@ def main():
     # Initialize repositories
     currency_repo = CurrencyRepository(api_service)
     rate_repo = ExchangeRateRepository(api_service, currency_repo)
+    history_repo = HistoryRepository()
+    settings_repo = SettingsRepository()
     
     # Initialize controller
-    controller = CurrencyController(currency_repo, rate_repo)
+    controller = CurrencyController(currency_repo, rate_repo, history_repo, settings_repo)
     
     # Create and show main window
     window = MainWindow(controller)

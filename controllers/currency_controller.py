@@ -2,15 +2,22 @@
 Business logic controller for currency conversion
 """
 from typing import Tuple, List
-from repositories import CurrencyRepository, ExchangeRateRepository
+from datetime import datetime
+from repositories import CurrencyRepository, ExchangeRateRepository, HistoryRepository, SettingsRepository
+from models.transaction import Transaction
 
 
 class CurrencyController:
     """Controller handling currency conversion business logic"""
     
-    def __init__(self, currency_repo: CurrencyRepository, rate_repo: ExchangeRateRepository):
+    def __init__(self, currency_repo: CurrencyRepository, 
+                 rate_repo: ExchangeRateRepository,
+                 history_repo: HistoryRepository,
+                 settings_repo: SettingsRepository):
         self._currency_repo = currency_repo
         self._rate_repo = rate_repo
+        self._history_repo = history_repo
+        self._settings_repo = settings_repo
     
     def initialize(self) -> Tuple[bool, str]:
         """Initialize data by loading currencies and rates"""
@@ -46,7 +53,14 @@ class CurrencyController:
     
     def get_default_currencies(self) -> Tuple[str, str]:
         """Get default currency codes (from, to)"""
-        return "USD", "EUR"
+        from_code = self._settings_repo.get("default_from_currency", "USD")
+        to_code = self._settings_repo.get("default_to_currency", "EUR")
+        return from_code, to_code
+    
+    def set_default_currencies(self, from_code: str, to_code: str):
+        """Set default currency codes"""
+        self._settings_repo.set("default_from_currency", from_code)
+        self._settings_repo.set("default_to_currency", to_code)
     
     def convert(self, from_code: str, to_code: str, amount: float) -> Tuple[bool, float, str]:
         """
@@ -75,10 +89,31 @@ class CurrencyController:
             amount_in_usd = amount / from_rate.get_rate()
             result = to_rate.calculate(amount_in_usd)
             
-            rate_info = f"1 {from_code} = {result/amount:.4f} {to_code}"
+            rate = result / amount if amount > 0 else 0
+            rate_info = f"1 {from_code} = {rate:.4f} {to_code}"
+            
+            # Save to history
+            transaction = Transaction(
+                from_currency=from_code,
+                to_currency=to_code,
+                amount=amount,
+                result=result,
+                rate=rate,
+                timestamp=datetime.now()
+            )
+            self._history_repo.add(transaction)
+            
             return True, result, rate_info
         except Exception as e:
             return False, 0.0, f"Conversion error: {str(e)}"
+    
+    def get_history(self) -> List[Transaction]:
+        """Get transaction history"""
+        return self._history_repo.get_all()
+    
+    def clear_history(self):
+        """Clear transaction history"""
+        self._history_repo.clear()
     
     def get_conversion_display(self, from_code: str, to_code: str, 
                                amount: float, result: float) -> str:

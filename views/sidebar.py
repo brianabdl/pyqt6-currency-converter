@@ -3,6 +3,7 @@ Sidebar navigation widget
 """
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QLabel, QFrame)
 from PyQt6.QtCore import pyqtSignal, Qt
+from .theme import ThemeColors
 
 class SidebarButton(QPushButton):
     """Custom styled button for sidebar"""
@@ -13,24 +14,28 @@ class SidebarButton(QPushButton):
         self.setAutoExclusive(True)
         self.setMinimumHeight(50)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setStyleSheet("""
-            QPushButton {
+        # Initial style will be set by update_theme
+
+    def update_theme(self, theme: ThemeColors):
+        """Update button styles based on theme"""
+        self.setStyleSheet(f"""
+            QPushButton {{
                 text-align: left;
                 padding-left: 20px;
                 border: none;
                 border-radius: 5px;
                 font-size: 14px;
-                color: #5f6368;
-            }
-            QPushButton:hover {
-                background-color: #f1f3f4;
-                color: #202124;
-            }
-            QPushButton:checked {
-                background-color: #e8f0fe;
-                color: #1967d2;
+                color: {theme.text_secondary};
+            }}
+            QPushButton:hover {{
+                background-color: {theme.hover};
+                color: {theme.text_primary};
+            }}
+            QPushButton:checked {{
+                background-color: {theme.selected_bg};
+                color: {theme.selected_text};
                 font-weight: bold;
-            }
+            }}
         """)
 
 class Sidebar(QFrame):
@@ -38,12 +43,13 @@ class Sidebar(QFrame):
     
     # Signal emitted when a navigation item is selected (returns index)
     page_changed = pyqtSignal(int)
+    # Signal for theme toggle
+    theme_toggled = pyqtSignal(bool)
     
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.Shape.NoFrame)
         self.setFixedWidth(250)
-        self.setStyleSheet("background-color: #ffffff; border-right: 1px solid #dadce0;")
         
         self._setup_ui()
         
@@ -53,9 +59,9 @@ class Sidebar(QFrame):
         layout.setSpacing(5)
         
         # App Logo/Title Area
-        title_label = QLabel("Currency\nConverter")
-        title_label.setStyleSheet("font-size: 20px; font-weight: bold; color: #202124; padding: 10px;")
-        layout.addWidget(title_label)
+        self.title_label = QLabel("Currency\nConverter")
+        # Style will be set in update_theme
+        layout.addWidget(self.title_label)
         
         layout.addSpacing(20)
         
@@ -74,12 +80,38 @@ class Sidebar(QFrame):
         layout.addWidget(self.btn_settings)
         
         layout.addStretch()
+
+        # Theme Toggle
+        self.theme_btn = QPushButton("🌙 Dark Mode")
+        self.theme_btn.setCheckable(True)
+        self.theme_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.theme_btn.clicked.connect(self.theme_toggled.emit)
+        self.theme_btn.setStyleSheet("border: none; text-align: left; padding: 10px;")
+        layout.addWidget(self.theme_btn)
         
         # Version info
-        version_label = QLabel("v1.0.0")
-        version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        version_label.setStyleSheet("color: #9aa0a6; font-size: 12px;")
-        layout.addWidget(version_label)
+        self.version_label = QLabel("v1.0.0")
+        self.version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.version_label)
         
         # Set default selection
         self.btn_converter.setChecked(True)
+
+    def update_theme(self, theme: ThemeColors):
+        """Update sidebar styles based on theme"""
+        self.setStyleSheet(f"background-color: {theme.surface}; border-right: 1px solid {theme.border};")
+        
+        self.title_label.setStyleSheet(f"font-size: 20px; font-weight: bold; color: {theme.text_primary}; padding: 10px;")
+        
+        self.btn_converter.update_theme(theme)
+        self.btn_history.update_theme(theme)
+        self.btn_settings.update_theme(theme)
+        
+        # Update theme button
+        self.theme_btn.setStyleSheet(f"color: {theme.text_secondary}; border: none; text-align: left; padding: 10px;")
+        if self.theme_btn.isChecked():
+            self.theme_btn.setText("☀️ Light Mode")
+        else:
+            self.theme_btn.setText("🌙 Dark Mode")
+
+        self.version_label.setStyleSheet(f"color: {theme.text_secondary}; font-size: 12px;")

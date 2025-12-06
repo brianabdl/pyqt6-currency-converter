@@ -3,9 +3,10 @@ Converter view for the Currency Converter application
 """
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                               QLineEdit, QPushButton, QComboBox, QFrame, 
-                              QCompleter, QStatusBar)
+                              QCompleter)
 from PyQt6.QtCore import Qt, QTimer
 from controllers import CurrencyController
+from .theme import ThemeColors
 
 class MaterialCard(QFrame):
     """Material Design card widget"""
@@ -23,6 +24,7 @@ class ConverterView(QWidget):
     def __init__(self, controller: CurrencyController):
         super().__init__()
         self._controller = controller
+        self._current_theme = None # Store current theme for status updates
         self._setup_ui()
         self._connect_signals()
         self._load_data()
@@ -58,7 +60,7 @@ class ConverterView(QWidget):
         
         main_layout.addStretch()
         
-        # Status label (replacing StatusBar since this is a widget now)
+        # Status label
         self.status_label = QLabel("Ready to convert")
         self.status_label.setObjectName("statusLabel")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -296,13 +298,13 @@ class ConverterView(QWidget):
     def _get_flag(self, currency_code: str) -> str:
         """Get flag emoji for currency code"""
         flags = {
-            'USD': '🇺🇸', 'EUR': '🇪🇺', 'GBP': '🇬', 'JPY': '🇯🇵',
+            'USD': '🇺🇸', 'EUR': '🇪🇺', 'GBP': '🇬🇧', 'JPY': '🇯🇵',
             'AUD': '🇦🇺', 'CAD': '🇨🇦', 'CHF': '🇨🇭', 'CNY': '🇨🇳',
             'SEK': '🇸🇪', 'NZD': '🇳🇿', 'MXN': '🇲🇽', 'SGD': '🇸🇬',
             'HKD': '🇭🇰', 'NOK': '🇳🇴', 'KRW': '🇰🇷', 'TRY': '🇹🇷',
             'RUB': '🇷🇺', 'INR': '🇮🇳', 'BRL': '🇧🇷', 'ZAR': '🇿🇦',
             'IDR': '🇮🇩', 'MYR': '🇲🇾', 'PHP': '🇵🇭', 'THB': '🇹🇭',
-            'DKK': '🇰', 'PLN': '🇵🇱', 'TWD': '🇹🇼', 'ARS': '🇦🇷',
+            'DKK': '🇩🇰', 'PLN': '🇵🇱', 'TWD': '🇹🇼', 'ARS': '🇦🇷',
             'CLP': '🇨🇱', 'COP': '🇨🇴', 'PEN': '🇵🇪', 'CZK': '🇨🇿',
             'HUF': '🇭🇺', 'ILS': '🇮🇱', 'AED': '🇦🇪', 'SAR': '🇸🇦',
             'EGP': '🇪🇬', 'VND': '🇻🇳', 'PKR': '🇵🇰', 'BDT': '🇧🇩',
@@ -421,15 +423,121 @@ class ConverterView(QWidget):
     
     def _update_status(self, message: str, status_type: str = "info"):
         """Update status label with styled message"""
-        # In the main window this was a status bar, here we just update the label
         self.status_label.setText(message)
         
-        colors = {
-            "info": "#2196F3",
-            "success": "#4CAF50",
-            "error": "#F44336",
-            "warning": "#FF9800"
-        }
-        
-        color = colors.get(status_type, "#2196F3")
+        # Use theme colors if available, otherwise fallback
+        if self._current_theme:
+            colors = {
+                "info": self._current_theme.info,
+                "success": self._current_theme.success,
+                "error": self._current_theme.error,
+                "warning": self._current_theme.warning
+            }
+            color = colors.get(status_type, self._current_theme.info)
+        else:
+            # Fallback colors
+            colors = {
+                "info": "#2196F3",
+                "success": "#4CAF50",
+                "error": "#F44336",
+                "warning": "#FF9800"
+            }
+            color = colors.get(status_type, "#2196F3")
+            
         self.status_label.setStyleSheet(f"color: {color}; font-weight: bold;")
+
+    def update_theme(self, theme: ThemeColors):
+        """Update view styles based on theme"""
+        self._current_theme = theme
+        
+        self.setStyleSheet(f"""
+            QWidget {{
+                background-color: {theme.background};
+                color: {theme.text_primary};
+            }}
+            QLabel#appTitle {{
+                font-size: 24px;
+                font-weight: bold;
+                color: {theme.primary};
+            }}
+            QLabel#appSubtitle {{
+                font-size: 14px;
+                color: {theme.text_secondary};
+            }}
+            QFrame#materialCard {{
+                background-color: {theme.surface};
+                border: 1px solid {theme.border};
+                border-radius: 8px;
+            }}
+            QLabel#fieldLabel {{
+                font-weight: bold;
+                color: {theme.text_secondary};
+            }}
+            QLineEdit {{
+                padding: 10px;
+                border: 1px solid {theme.input_border};
+                border-radius: 4px;
+                background-color: {theme.input_bg};
+                color: {theme.text_primary};
+                font-size: 16px;
+            }}
+            QComboBox {{
+                padding: 10px;
+                border: 1px solid {theme.input_border};
+                border-radius: 4px;
+                background-color: {theme.input_bg};
+                color: {theme.text_primary};
+                font-size: 16px;
+            }}
+            QPushButton#swapButton {{
+                background-color: {theme.surface};
+                border: 1px solid {theme.border};
+                border-radius: 28px;
+                font-size: 24px;
+                color: {theme.primary};
+            }}
+            QPushButton#swapButton:hover {{
+                background-color: {theme.hover};
+            }}
+            QPushButton#primaryButton {{
+                background-color: {theme.primary};
+                color: white;
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+                font-size: 16px;
+            }}
+            QPushButton#primaryButton:hover {{
+                background-color: {theme.selected_text};
+            }}
+            QPushButton#secondaryButton {{
+                background-color: {theme.secondary_btn_bg};
+                color: {theme.secondary_btn_text};
+                border: none;
+                border-radius: 4px;
+                font-weight: bold;
+            }}
+            QPushButton#secondaryButton:hover {{
+                background-color: {theme.hover};
+            }}
+            QLabel#cardTitle {{
+                font-size: 18px;
+                font-weight: bold;
+                color: {theme.text_primary};
+            }}
+            QLabel#fromAmount, QLabel#toAmount {{
+                font-size: 24px;
+                font-weight: bold;
+                color: {theme.text_primary};
+            }}
+            QLabel#arrowSeparator {{
+                font-size: 24px;
+                color: {theme.text_secondary};
+            }}
+            QLabel#resultInfo, QLabel#rateInfo {{
+                color: {theme.text_secondary};
+            }}
+        """)
+        
+        # Re-apply status style with new theme
+        self._update_status(self.status_label.text(), "info")
