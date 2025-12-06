@@ -31,7 +31,7 @@ def main():
     controller = CurrencyController(currency_repo, rate_repo, history_repo, settings_repo)
     
     # Create and show main window
-    window = MainWindow(controller)
+    window = MainWindow(controller, settings_repo)
     window.show()
     
     # Run application

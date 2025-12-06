@@ -15,9 +15,10 @@ from .theme import LIGHT_THEME, DARK_THEME
 class MainWindow(QMainWindow):
     """Main application window with Sidebar Navigation"""
     
-    def __init__(self, controller: CurrencyController):
+    def __init__(self, controller: CurrencyController, settings_repo):
         super().__init__()
         self._controller = controller
+        self.settings_repo = settings_repo
         self._setup_ui()
         self._init_theme()
     
@@ -81,7 +82,12 @@ class MainWindow(QMainWindow):
         """Initialize theme based on system settings or default"""
         # Simple detection: check if window text is light (indicating dark background)
         app = QApplication.instance()
-        if app:
+        # respect settings theme if available
+        if self.settings_repo.get("theme") == "dark":
+            is_dark = True
+        elif self.settings_repo.get("theme") == "light":
+            is_dark = False
+        elif app:
             palette = app.palette()
             text_color = palette.color(palette.ColorGroup.Active, palette.ColorRole.WindowText)
             # If text is bright (> 128), it's likely dark mode
@@ -99,6 +105,7 @@ class MainWindow(QMainWindow):
     def _on_theme_toggled(self, checked: bool):
         """Handle theme toggle"""
         theme = DARK_THEME if checked else LIGHT_THEME
+        self.settings_repo.set("theme", "dark" if checked else "light")
         self._apply_theme(theme)
 
     def _apply_theme(self, theme):
