@@ -4,6 +4,7 @@ Material Design inspired UI with enhanced UX and Navigation
 """
 from PyQt6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QStackedWidget, QLabel, QApplication)
 from PyQt6.QtCore import Qt
+from config import Config
 from controllers import CurrencyController
 from .sidebar import Sidebar
 from .converter_view import ConverterView
@@ -22,10 +23,8 @@ class MainWindow(QMainWindow):
     
     def _setup_ui(self):
         """Setup the main window layout with sidebar and content area"""
-        self.setWindowTitle("Currency Converter Pro")
-        self.setGeometry(100, 100, 1000, 700)
-        self.setMinimumSize(900, 650)
-        
+        self.setWindowTitle(Config.APP_NAME)
+
         # Central widget
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
