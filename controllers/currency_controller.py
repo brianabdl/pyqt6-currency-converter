@@ -39,6 +39,15 @@ class CurrencyController:
         currency = self._currency_repo.get_by_code(code)
         return currency.get_name() if currency else code
     
+    def get_available_currencies(self) -> List[Tuple[str, str]]:
+        """Get list of (code, name) tuples for all available currencies"""
+        codes = self._currency_repo.get_all_codes()
+        return [(code, self.get_currency_name(code)) for code in codes]
+    
+    def get_default_currencies(self) -> Tuple[str, str]:
+        """Get default currency codes (from, to)"""
+        return "USD", "EUR"
+    
     def convert(self, from_code: str, to_code: str, amount: float) -> Tuple[bool, float, str]:
         """
         Convert amount from one currency to another
