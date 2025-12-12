@@ -73,7 +73,7 @@ class ConverterView(QWidget):
         header_layout.setSpacing(5)
         
         # App title
-        title = QLabel("💱 Currency Converter")
+        title = QLabel("Currency Converter")
         title.setObjectName("appTitle")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         header_layout.addWidget(title)
@@ -271,10 +271,12 @@ class ConverterView(QWidget):
         
         from_completer = QCompleter(currency_list, self)
         from_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        from_completer.setFilterMode(Qt.MatchFlag.MatchContains)
         self.from_combo.setCompleter(from_completer)
         
         to_completer = QCompleter(currency_list, self)
         to_completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+        to_completer.setFilterMode(Qt.MatchFlag.MatchContains)
         self.to_combo.setCompleter(to_completer)
         
         # Set defaults
